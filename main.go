@@ -28,7 +28,7 @@ func main() {
 		User:     *user,
 		Domain:   *domain,
 		Password: *password,
-		Hash:     *hash, // TODO, Implement hash vs password function
+		Hash:     *hash, //
 		Port:     *port,
 	}
 
