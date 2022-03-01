@@ -16,7 +16,7 @@ func TestFullObject(t *testing.T) {
 	}
 
 	testTarget := Target{}
-	err := testTarget.InitTCP(authuser)
+	err := testTarget.InitTCP()
 	if err != nil {
 		t.Errorf("Failed to connect: %s\n", err)
 	}

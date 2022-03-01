@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 
@@ -12,12 +11,14 @@ import (
 
 func main() {
 	parser := argparse.NewParser("shareblair", "")
-	target := parser.String("t", "target", &argparse.Options{Required: true, Help: "IP Target to scan for SMB Shares"})
+	target := parser.String("t", "target", &argparse.Options{Required: true, Help: "Hostname, IP, CIDR or file of targets"})
 	user := parser.String("u", "user", &argparse.Options{Required: false, Help: "User to authenticate with"})
 	domain := parser.String("d", "domain", &argparse.Options{Required: false, Help: "Domain to authenticate with"})
 	password := parser.String("p", "password", &argparse.Options{Required: false, Help: "Password to authenticate with"})
 	hash := parser.String("", "hash", &argparse.Options{Required: false, Help: "Hash to authenticate with"})
 	port := parser.Int("", "port", &argparse.Options{Required: false, Default: 445, Help: "Port to connect to"})
+	verbose := parser.Flag("v", "verbose", &argparse.Options{Required: false, Help: "Add verbosity", Default: false})
+	//TODO add timeout for func (r *Target) InitTCP()
 
 	err := parser.Parse(os.Args)
 	if err != nil {
@@ -28,41 +29,30 @@ func main() {
 		User:     *user,
 		Domain:   *domain,
 		Password: *password,
-		Hash:     *hash, //
+		Hash:     *hash,
 		Port:     *port,
+		Verbose:  *verbose,
 	}
 
 	//var hostsArray []smbprotocol.Target
 
-	singlehost := &smbprotocol.Target{}
-	err = singlehost.Initialize(userflags, userflags.Target)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = singlehost.InitTCP(userflags)
-	if err != nil {
-		log.Fatal(err)
-	}
-	err = singlehost.InitSMBAuth(userflags)
-	if err != nil {
-		log.Fatal(err)
+	userflags.DetermineTarget()
+	var scope []smbprotocol.Target
+
+	for _, x := range userflags.TargetsParsed {
+		var singleTarget smbprotocol.Target
+		singleTarget.Initialize(userflags, x)
+		scope = append(scope, singleTarget)
+
 	}
 
-	shares, newerr := singlehost.GetShareList()
-	if newerr != nil {
-		log.Fatal(newerr)
-	}
+	for _, y := range scope {
+		err := y.InitTCP()
+		if err == nil {
+			y.CloseTCP()
+		}
 
-	for _, x := range shares {
-		fmt.Println(x)
 	}
-
-	if singlehost.GuestAccessCheck() {
-		fmt.Println("Guest Access is enabled")
-	} else {
-		fmt.Println("Guest access is disabled")
-	}
-
 }
 
 // TODO, Add a parser for the target that will detect hostname vs IP vs CIDR vs File

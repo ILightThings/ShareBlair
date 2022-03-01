@@ -5,13 +5,15 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"time"
 
 	"github.com/hirochachacha/go-smb2"
 	"github.com/ilightthings/shareblair/lib/options"
 )
 
 type folder struct {
-	listoffolders   []folder
+	Path            []string
+	ListOfFolders   []folder
 	ListOfFiles     []file
 	ReadAccess      bool
 	WriteAccess     bool
@@ -21,6 +23,7 @@ type folder struct {
 }
 
 type file struct {
+	Path       string
 	FolderPath string
 	FilePath   string
 	FileName   string
@@ -67,16 +70,24 @@ func (r *Target) Initialize(f *options.UserFlags, target string) error {
 
 }
 
-// TODO, Rebuild code so each target is an object and the methods defined in smboptions.go are implemented as object methods.
-
-func (r *Target) InitTCP(f *options.UserFlags) error {
-	dstNet := fmt.Sprintf("%s:%d", f.Target, f.Port)
-	conn, err := net.Dial("tcp", dstNet)
+func (r *Target) InitTCP() error {
+	dstNet := fmt.Sprintf("%s:%d", r.HostDestination, r.UserFlag.Port)
+	if r.UserFlag.Verbose {
+		fmt.Printf("Attempting TCP Connection to %s\n", dstNet)
+	}
+	conn, err := net.DialTimeout("tcp", dstNet, 3*time.Second)
 	if err != nil {
+		if r.UserFlag.Verbose {
+			fmt.Printf("Failed TCP Connection to %s\n", dstNet)
+		}
+
 		r.ConnectionTCP_OK = false
 		return err
 	} else {
-		r.ConnectionTCP_OK = false
+		if r.UserFlag.Verbose {
+			fmt.Printf("Sucessful TCP Connection to %s\n", dstNet)
+		}
+		r.ConnectionTCP_OK = true
 		r.ConnectionTCP = conn
 		return nil
 	}

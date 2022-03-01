@@ -7,4 +7,6 @@ type Share struct {
 	UserWrite  bool
 	GuestRead  bool
 	GuestWrite bool
+	Folders    []folder
+	Files      []file
 }

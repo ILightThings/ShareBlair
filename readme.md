@@ -46,7 +46,7 @@ Arguments:
 - [ ] Test Read Write Access for every share found
 - [ ] Read Targets in Cidr Notation
 - [ ] Read Targets from file
-- [ ] Add ability to use hash instead of password
+- [x] Add ability to use hash instead of password
 - [ ] Add Threading
 - [ ] Output format
 - [ ] HTML Output similar to dumpldapdomain   
