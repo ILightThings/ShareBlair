@@ -1,6 +1,7 @@
 package smbprotocol
 
 import (
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"net"
@@ -29,26 +30,19 @@ type file struct {
 type Target struct {
 	HostDestination  string
 	ResolvedIP       net.IP
-	User             string
-	Password         string
-	Domain           string
-	Hash             string
+	UserFlag         *options.UserFlags
 	ConnectionTCP    net.Conn
 	ConnectionTCP_OK bool
 	ConnectionSMB    *smb2.Session
 	ConnectionSMB_OK bool
 	GuestOnly        bool
 	GuestAccess      bool
-	ListOfShares     []string
-	// TODO, replace user,password,domain,hash with userflag object. This will increase memory usages as it will copy it per target.
+	ListOfShares     []Share
 }
 
 // TODO, add verbose
 func (r *Target) Initialize(f *options.UserFlags, target string) error {
-	r.User = f.User
-	r.Password = f.Password
-	r.Domain = f.Domain
-	r.Hash = f.Hash
+	r.UserFlag = f
 	r.HostDestination = target
 
 	if r.HostDestination == "" {
@@ -56,14 +50,14 @@ func (r *Target) Initialize(f *options.UserFlags, target string) error {
 	}
 
 	// Check for username + password or hash
-	if r.User != "" {
-		if r.Password == "" && r.Hash == "" {
+	if r.UserFlag.User != "" {
+		if r.UserFlag.Hash == "" && r.UserFlag.Password == "" {
 			return errors.New("no password or hash supplied")
 		}
 	}
 
 	// Check for guest only test
-	if r.User == "" {
+	if r.UserFlag.User == "" {
 		r.GuestOnly = true
 	} else {
 		r.GuestOnly = false
@@ -101,10 +95,20 @@ func (r *Target) CloseTCP() error {
 
 func (r *Target) InitSMBAuth(f *options.UserFlags) error {
 	smbConnectionOptions := &smb2.NTLMInitiator{
-		User:     f.User,
-		Password: f.Password,
-		Domain:   f.Domain,
+		User:   f.User,
+		Domain: f.Domain,
 	}
+
+	if r.UserFlag.Password != "" {
+		smbConnectionOptions.Password = r.UserFlag.Password
+	} else {
+		var newerr error
+		smbConnectionOptions.Hash, newerr = hex.DecodeString(r.UserFlag.Hash)
+		if newerr != nil {
+			return errors.New("could not encode hash")
+		}
+	}
+
 	smbConnection := &smb2.Dialer{
 		Initiator: smbConnectionOptions,
 	}
@@ -134,7 +138,11 @@ func (r *Target) GetShareList() ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	r.ListOfShares = list
+	for _, x := range list {
+		var shareFolder Share
+		shareFolder.ShareName = x
+		r.ListOfShares = append(r.ListOfShares, shareFolder)
+	}
 	return list, nil
 }
 

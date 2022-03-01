@@ -10,3 +10,5 @@ type UserFlags struct {
 	Hash     string
 	Port     int
 }
+
+// TODO add targetParser
