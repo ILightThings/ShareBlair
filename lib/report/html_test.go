@@ -1,12 +1,13 @@
-package smbprotocol
+package report
 
 import (
 	"testing"
 
 	"github.com/ilightthings/shareblair/lib/options"
+	"github.com/ilightthings/shareblair/lib/smbprotocol"
 )
 
-func TestFullObject(t *testing.T) {
+func TestGenerateReport(t *testing.T) {
 	authuser := &options.UserFlags{
 		User:     "Gameandwatch",
 		Target:   "127.0.0.1",
@@ -16,7 +17,7 @@ func TestFullObject(t *testing.T) {
 		Verbose:  false,
 	}
 
-	var testTarget Target
+	var testTarget smbprotocol.Target
 
 	testTarget.Initialize(authuser, "127.0.0.1")
 
@@ -53,8 +54,12 @@ func TestFullObject(t *testing.T) {
 			}
 		}
 
-		testTarget.CloseSMBSession()
-		testTarget.CloseTCP()
-
 	}
+	testTarget.CloseSMBSession()
+	testTarget.CloseTCP()
+	error2 := GenerateReport(&testTarget)
+	if error2 != nil {
+		t.Error(error2)
+	}
+
 }

@@ -11,25 +11,6 @@ import (
 	"github.com/ilightthings/shareblair/lib/options"
 )
 
-type folder struct {
-	Path            []string
-	ListOfFolders   []folder
-	ListOfFiles     []file
-	ReadAccess      bool
-	WriteAccess     bool
-	NumberOfFiles   int
-	NumberOfFolders int
-	NumberOfItems   int
-}
-
-type file struct {
-	Path       string
-	FolderPath string
-	FilePath   string
-	FileName   string
-	Size       int
-}
-
 type Target struct {
 	HostDestination  string
 	ResolvedIP       net.IP
@@ -75,7 +56,7 @@ func (r *Target) InitTCP() error {
 	if r.UserFlag.Verbose {
 		fmt.Printf("Attempting TCP Connection to %s\n", dstNet)
 	}
-	conn, err := net.DialTimeout("tcp", dstNet, 3*time.Second)
+	conn, err := net.DialTimeout("tcp", dstNet, 1*time.Second)
 	if err != nil {
 		if r.UserFlag.Verbose {
 			fmt.Printf("Failed TCP Connection to %s\n", dstNet)
@@ -95,19 +76,22 @@ func (r *Target) InitTCP() error {
 }
 
 func (r *Target) CloseTCP() error {
+	if r.UserFlag.Verbose {
+		fmt.Printf("Closing TCP Connection to %s", r.HostDestination)
+	}
 	err := r.ConnectionTCP.Close()
+
 	if err != nil {
 		return err
 	}
-	r.ConnectionTCP_OK = false
 	return nil
 
 }
 
-func (r *Target) InitSMBAuth(f *options.UserFlags) error {
+func (r *Target) InitSMBAuth() error {
 	smbConnectionOptions := &smb2.NTLMInitiator{
-		User:   f.User,
-		Domain: f.Domain,
+		User:   r.UserFlag.User,
+		Domain: r.UserFlag.Domain,
 	}
 
 	if r.UserFlag.Password != "" {
@@ -123,11 +107,20 @@ func (r *Target) InitSMBAuth(f *options.UserFlags) error {
 	smbConnection := &smb2.Dialer{
 		Initiator: smbConnectionOptions,
 	}
+	if r.UserFlag.Verbose {
+		fmt.Printf("Attempting SMB autentication with %s\\%s:%s%s\n", r.UserFlag.Domain, r.UserFlag.User, r.UserFlag.Password, r.UserFlag.Hash)
+	}
 	s, err := smbConnection.Dial(r.ConnectionTCP)
 	if err != nil {
+		if r.UserFlag.Verbose {
+			fmt.Printf("Failed SMB autentication with %s\\%s:%s%s\n", r.UserFlag.Domain, r.UserFlag.User, r.UserFlag.Password, r.UserFlag.Hash)
+		}
 		r.ConnectionSMB_OK = false
 		return err
 	} else {
+		if r.UserFlag.Verbose {
+			fmt.Printf("Sucsessful SMB autentication with %s\\%s:%s%s\n", r.UserFlag.Domain, r.UserFlag.User, r.UserFlag.Password, r.UserFlag.Hash)
+		}
 		r.ConnectionSMB_OK = true
 		r.ConnectionSMB = s
 		return nil
@@ -140,7 +133,6 @@ func (r *Target) CloseSMBSession() error {
 	if err != nil {
 		return err
 	}
-	r.ConnectionSMB_OK = false
 	return nil
 }
 
@@ -158,6 +150,9 @@ func (r *Target) GetShareList() ([]string, error) {
 }
 
 func (r *Target) GuestAccessCheck() bool {
+	if r.UserFlag.Verbose {
+		fmt.Printf("Testing guest access to %s\n", r.HostDestination)
+	}
 	guestOptions := &smb2.NTLMInitiator{
 		User:     "Guest",
 		Password: "",
@@ -169,11 +164,18 @@ func (r *Target) GuestAccessCheck() bool {
 
 	conn, err := guestConnect.Dial(r.ConnectionTCP)
 	if err != nil {
+		if r.UserFlag.Verbose {
+			fmt.Printf("Guest access to %s disabled\n", r.HostDestination)
+		}
 		r.GuestAccess = false
 		return false
 	} else {
 		conn.Logoff() // TODO Maybe don't close this
 		//Might need to just give this connection back if I want to do guest access to shares testing
+
+		if r.UserFlag.Verbose {
+			fmt.Printf("Guest access to %s enabled\n", r.HostDestination)
+		}
 		return true
 
 	}

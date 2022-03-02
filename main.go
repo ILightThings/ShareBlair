@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -49,10 +50,20 @@ func main() {
 	for _, y := range scope {
 		err := y.InitTCP()
 		if err == nil {
+			err := y.InitSMBAuth()
+			if err == nil {
+				shares, err := y.GetShareList()
+				if err != nil {
+					log.Fatal(err)
+				}
+				fmt.Printf("Guest Access: %t\n", y.GuestAccessCheck())
+				for _, share := range shares {
+					fmt.Println(share)
+				}
+				y.CloseSMBSession()
+			}
 			y.CloseTCP()
 		}
 
 	}
 }
-
-// TODO, Add a parser for the target that will detect hostname vs IP vs CIDR vs File
