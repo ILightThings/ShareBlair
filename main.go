@@ -22,6 +22,7 @@ func main() {
 	maxDepth := parser.Int("", "maxdepth", &argparse.Options{Required: false, Help: "Max Recursive Depth for Share Scanning. 0 will only scan the top level folders.", Default: 5})
 
 	//TODO add timeout for func (r *Target) InitTCP()
+	//TODO add out file location
 
 	err := parser.Parse(os.Args)
 	if err != nil {
