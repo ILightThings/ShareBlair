@@ -10,9 +10,9 @@ import (
 
 func TestGenerateReport(t *testing.T) {
 	authuser := &options.UserFlags{
-		User:     "***REMOVED***",
+		User:     "gameandwatch",
 		Target:   "127.0.0.1",
-		Password: "***REMOVED***",
+		Password: "password",
 		Domain:   "./",
 		Port:     445,
 		Verbose:  false,
