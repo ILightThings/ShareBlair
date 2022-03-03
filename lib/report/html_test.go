@@ -1,6 +1,7 @@
 package report
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/ilightthings/shareblair/lib/options"
@@ -9,12 +10,13 @@ import (
 
 func TestGenerateReport(t *testing.T) {
 	authuser := &options.UserFlags{
-		User:     "Gameandwatch",
+		User:     "***REMOVED***",
 		Target:   "127.0.0.1",
-		Password: "password",
+		Password: "***REMOVED***",
 		Domain:   "./",
 		Port:     445,
 		Verbose:  false,
+		MaxDepth: 1,
 	}
 
 	var testTarget smbprotocol.Target
@@ -48,10 +50,12 @@ func TestGenerateReport(t *testing.T) {
 		if err1 != nil {
 			t.Error(err1)
 		} else {
-			err2 := testTarget.ListOfShares[y].ListFilesRoot()
+			fmt.Printf("Testing share %s\n", testTarget.ListOfShares[y].ShareName)
+			err2 := testTarget.ListOfShares[y].DirWalk(testTarget.HostDestination)
 			if err2 != nil {
 				t.Error(err2)
 			}
+
 		}
 
 	}

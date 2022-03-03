@@ -19,6 +19,8 @@ func main() {
 	hash := parser.String("", "hash", &argparse.Options{Required: false, Help: "Hash to authenticate with"})
 	port := parser.Int("", "port", &argparse.Options{Required: false, Default: 445, Help: "Port to connect to"})
 	verbose := parser.Flag("v", "verbose", &argparse.Options{Required: false, Help: "Add verbosity", Default: false})
+	maxDepth := parser.Int("", "maxdepth", &argparse.Options{Required: false, Help: "Max Recursive Depth for Share Scanning. 0 will only scan the top level folders.", Default: 5})
+
 	//TODO add timeout for func (r *Target) InitTCP()
 
 	err := parser.Parse(os.Args)
@@ -33,6 +35,7 @@ func main() {
 		Hash:     *hash,
 		Port:     *port,
 		Verbose:  *verbose,
+		MaxDepth: *maxDepth,
 	}
 
 	//var hostsArray []smbprotocol.Target

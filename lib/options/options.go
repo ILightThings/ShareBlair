@@ -18,6 +18,7 @@ type UserFlags struct {
 	Password      string
 	Hash          string
 	Port          int
+	MaxDepth      int
 }
 
 func (x *UserFlags) DetermineTarget() []string {

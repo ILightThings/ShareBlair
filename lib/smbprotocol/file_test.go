@@ -47,14 +47,13 @@ func TestFullObject(t *testing.T) {
 		if err1 != nil {
 			t.Error(err1)
 		} else {
-			err2 := testTarget.ListOfShares[y].ListFilesRoot()
+			err2 := testTarget.ListOfShares[y].ListFilesRoot(testTarget.HostDestination)
 			if err2 != nil {
 				t.Error(err2)
 			}
 		}
 
-		testTarget.CloseSMBSession()
-		testTarget.CloseTCP()
-
 	}
+	testTarget.CloseSMBSession()
+	testTarget.CloseTCP()
 }
