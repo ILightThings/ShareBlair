@@ -77,7 +77,7 @@ func (r *Target) InitTCP() error {
 
 func (r *Target) CloseTCP() error {
 	if r.UserFlag.Verbose {
-		fmt.Printf("Closing TCP Connection to %s", r.HostDestination)
+		fmt.Printf("Closing TCP Connection to %s\n", r.HostDestination)
 	}
 	err := r.ConnectionTCP.Close()
 
@@ -162,7 +162,7 @@ func (r *Target) GuestAccessCheck() bool {
 		Initiator: guestOptions,
 	}
 
-	conn, err := guestConnect.Dial(r.ConnectionTCP)
+	_, err := guestConnect.Dial(r.ConnectionTCP)
 	if err != nil {
 		if r.UserFlag.Verbose {
 			fmt.Printf("Guest access to %s disabled\n", r.HostDestination)
@@ -170,7 +170,7 @@ func (r *Target) GuestAccessCheck() bool {
 		r.GuestAccess = false
 		return false
 	} else {
-		conn.Logoff() // TODO Maybe don't close this
+		//conn.Logoff() // TODO Maybe don't close this
 		//Might need to just give this connection back if I want to do guest access to shares testing
 
 		if r.UserFlag.Verbose {

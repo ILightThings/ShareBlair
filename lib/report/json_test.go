@@ -8,12 +8,12 @@ import (
 	"github.com/ilightthings/shareblair/lib/smbprotocol"
 )
 
-func TestGenerateReport(t *testing.T) {
+func TestJsonReport(t *testing.T) {
 	authuser := &options.UserFlags{
 		User:     "gameandwatch",
-		Target:   "127.0.0.1",
+		Target:   "192.168.1.231",
 		Password: "password",
-		Domain:   "./",
+		Domain:   "",
 		Port:     445,
 		Verbose:  false,
 		MaxDepth: 5,
@@ -21,7 +21,7 @@ func TestGenerateReport(t *testing.T) {
 
 	var testTarget smbprotocol.Target
 
-	testTarget.Initialize(authuser, "127.0.0.1")
+	testTarget.Initialize(authuser, authuser.Target)
 
 	err := testTarget.InitTCP()
 	if err != nil {
@@ -55,15 +55,17 @@ func TestGenerateReport(t *testing.T) {
 			if err2 != nil {
 				t.Error(err2)
 			}
+			testTarget.ListOfShares[y].UnmountShare()
 
 		}
 
 	}
-	testTarget.CloseSMBSession()
+	//testTarget.CloseSMBSession() // TODO CloseSMBSession is hanging..... Why??
 	testTarget.CloseTCP()
-	error2 := GenerateReport(&testTarget)
-	if error2 != nil {
-		t.Error(error2)
-	}
+	testTarget.InitTCP()
+	testTarget.GuestAccessCheck()
+	testTarget.CloseTCP()
+
+	MakeJSON(&testTarget, authuser)
 
 }

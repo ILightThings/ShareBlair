@@ -33,10 +33,10 @@ type Share struct {
 
 type folder_A struct {
 	Depth           int
-	Name            string
-	Path            string
-	FullPath        string
-	HumanPath       string
+	Name            string // Folder Name
+	path            string //Folder Path relative to root folder
+	fullPath        string // Share + folder path relative to root
+	HumanPath       string // Host + Share + Folder Path relative to root
 	ListOfFolders   []folder_A
 	ListOfFiles     []file_A
 	ReadAccess      bool
@@ -49,13 +49,11 @@ type folder_A struct {
 
 type file_A struct {
 	Name       string
-	Path       string
-	FullPath   string
+	path       string
+	fullPath   string
 	HumanPath  string
 	FolderPath string
-	FilePath   string
-	FileName   string
-	Size       int
+	Size       int64
 }
 
 func (s *Share) InitializeShare(q *smb2.Session, f *options.UserFlags) error {
@@ -68,7 +66,7 @@ func (s *Share) InitializeShare(q *smb2.Session, f *options.UserFlags) error {
 	s.Mount, err = s.SMBConnection.Mount(s.ShareName)
 	if err != nil {
 		if s.UserFlags.Verbose {
-			fmt.Printf("Failed to mount %s\n", s.ShareName)
+			fmt.Printf("Failed to mount %s -- %s\n", s.ShareName, err)
 		}
 		return err
 	}
@@ -115,12 +113,12 @@ func sortFiles(osfile []fs.FileInfo, CurrentPath string, depth int, s *Share, ho
 			var newfolder folder_A
 			newfolder.Name = x.Name()
 			if CurrentPath == "" {
-				newfolder.Path = x.Name()
+				newfolder.path = x.Name()
 			} else {
-				newfolder.Path = fmt.Sprintf("%s\\%s", CurrentPath, x.Name())
+				newfolder.path = fmt.Sprintf("%s\\%s", CurrentPath, x.Name())
 			}
-			newfolder.FullPath = fmt.Sprintf("\\%s\\%s", s.ShareName, newfolder.Path)
-			newfolder.HumanPath = fmt.Sprintf("\\\\%s%s", host, newfolder.FullPath)
+			newfolder.fullPath = fmt.Sprintf("\\%s\\%s", s.ShareName, newfolder.path)
+			newfolder.HumanPath = fmt.Sprintf("\\\\%s%s", host, newfolder.fullPath)
 			newfolder.Depth = depth
 
 			folders = append(folders, newfolder)
@@ -128,13 +126,14 @@ func sortFiles(osfile []fs.FileInfo, CurrentPath string, depth int, s *Share, ho
 			var newfile file_A
 			newfile.Name = x.Name()
 			if CurrentPath == "" {
-				newfile.Path = x.Name()
+				newfile.path = x.Name()
 			} else {
-				newfile.Path = fmt.Sprintf("%s\\%s", CurrentPath, x.Name()) // folder1\(name of folder)
+				newfile.path = fmt.Sprintf("%s\\%s", CurrentPath, x.Name()) // folder1\(name of folder)
 			}
 
-			newfile.FullPath = fmt.Sprintf("\\%s\\%s", s.ShareName, newfile.Path)
-			newfile.HumanPath = fmt.Sprintf("\\\\%s%s", host, newfile.FullPath)
+			newfile.Size = x.Size()
+			newfile.fullPath = fmt.Sprintf("\\%s\\%s", s.ShareName, newfile.path)
+			newfile.HumanPath = fmt.Sprintf("\\\\%s%s", host, newfile.fullPath)
 			newfile.FolderPath = fmt.Sprintf("\\\\%s\\%s\\%s", host, s.ShareName, CurrentPath)
 			files = append(files, newfile)
 		}
@@ -147,17 +146,18 @@ func walkDirFn(currentFolder *folder_A, depth int, s *Share, host string) error 
 		currentFolder.Stop_reason = MAX_DEPTH_STOP
 		return nil
 	}
-	FolderFiles, err := s.Mount.ReadDir(currentFolder.Path)
+	FolderFiles, err := s.Mount.ReadDir(currentFolder.path)
 	if err != nil {
 		currentFolder.Stop_reason = PERMISSION_DENY_STOP
 		return err
 	}
-	currentFolder.ListOfFiles, currentFolder.ListOfFolders = sortFiles(FolderFiles, currentFolder.Path, depth+1, s, host)
+	currentFolder.ReadAccess = true
+	currentFolder.ListOfFiles, currentFolder.ListOfFolders = sortFiles(FolderFiles, currentFolder.path, depth+1, s, host)
 	if len(currentFolder.ListOfFolders) == 0 {
 		currentFolder.Stop_reason = NO_MORE_FOLDERS
 	}
 
-	for x, _ := range currentFolder.ListOfFolders {
+	for x := range currentFolder.ListOfFolders {
 		walkDirFn(&currentFolder.ListOfFolders[x], depth+1, s, host)
 
 	}
@@ -175,7 +175,7 @@ func (s *Share) DirWalk(host string) error {
 		s.UserRead = true
 	}
 	s.ListOfFiles, s.ListOfFolders = sortFiles(TopLevelFoldersFile, "", 0, s, host)
-	for x, _ := range s.ListOfFolders {
+	for x := range s.ListOfFolders {
 		walkDirFn(&s.ListOfFolders[x], 0, s, host)
 	}
 	return nil

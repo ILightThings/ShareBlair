@@ -9,16 +9,17 @@ import (
 )
 
 type UserFlags struct {
-	Target        string
-	TargetsParsed []string
-	Threads       int
-	Verbose       bool
-	User          string
-	Domain        string
-	Password      string
-	Hash          string
-	Port          int
-	MaxDepth      int
+	Target          string
+	targetsParsed   []string
+	Threads         int
+	Verbose         bool
+	User            string
+	Domain          string
+	Password        string
+	Hash            string
+	Port            int
+	MaxDepth        int
+	OutFileLocation string
 }
 
 func (x *UserFlags) DetermineTarget() []string {
@@ -31,7 +32,7 @@ func (x *UserFlags) DetermineTarget() []string {
 			}
 
 		}
-		x.TargetsParsed = hosts
+		x.targetsParsed = hosts
 		return hosts
 	}
 	filelines, err := readTargetsFromFile(x.Target)
@@ -42,14 +43,14 @@ func (x *UserFlags) DetermineTarget() []string {
 				fmt.Printf("%d - %s\n", y, x)
 			}
 		}
-		x.TargetsParsed = filelines
+		x.targetsParsed = filelines
 		return filelines
 	}
 
 	var single []string
 	single = append(single, x.Target)
 
-	x.TargetsParsed = single
+	x.targetsParsed = single
 	if x.Verbose {
 		fmt.Printf("Parsed Target from input.\nTarget:\n")
 		for _, x := range single {

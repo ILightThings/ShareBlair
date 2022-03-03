@@ -23,10 +23,10 @@ func TestReturnTargets(t *testing.T) {
 	testCidr.DetermineTarget()
 	testFile.DetermineTarget()
 
-	cidrResult := testCidr.TargetsParsed
-	fileResult := testFile.TargetsParsed
-	ipResult := testSingleIP.TargetsParsed
-	singleHostResult := singleHost.TargetsParsed
+	cidrResult := testCidr.DetermineTarget()
+	fileResult := testFile.DetermineTarget()
+	ipResult := testSingleIP.DetermineTarget()
+	singleHostResult := singleHost.DetermineTarget()
 
 	if len(cidrResult) != 14 {
 		t.Errorf("CIDR expect len 16, got %d", len(cidrResult))

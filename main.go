@@ -1,12 +1,12 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 
 	"github.com/akamensky/argparse"
 	"github.com/ilightthings/shareblair/lib/options"
+	"github.com/ilightthings/shareblair/lib/report"
 	"github.com/ilightthings/shareblair/lib/smbprotocol"
 )
 
@@ -43,7 +43,7 @@ func main() {
 	userflags.DetermineTarget()
 	var scope []smbprotocol.Target
 
-	for _, x := range userflags.TargetsParsed {
+	for _, x := range userflags.DetermineTarget() {
 		var singleTarget smbprotocol.Target
 		singleTarget.Initialize(userflags, x)
 		scope = append(scope, singleTarget)
@@ -59,13 +59,22 @@ func main() {
 				if err != nil {
 					log.Fatal(err)
 				}
-				fmt.Printf("Guest Access: %t\n", y.GuestAccessCheck())
-				for _, share := range shares {
-					fmt.Println(share)
+				for z := range shares {
+					err := y.ListOfShares[z].InitializeShare(y.ConnectionSMB, y.UserFlag)
+					if err != nil {
+						y.ListOfShares[z].UserRead = false
+					} else {
+						y.ListOfShares[z].DirWalk(y.HostDestination)
+						y.ListOfShares[z].UnmountShare()
+					}
+
 				}
-				y.CloseSMBSession()
+
 			}
 			y.CloseTCP()
+		}
+		if y.ConnectionTCP_OK {
+			report.MakeJSON(&y, userflags)
 		}
 
 	}

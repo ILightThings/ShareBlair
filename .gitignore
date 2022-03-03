@@ -1,2 +1,5 @@
 _output/test.html
 sensitive.txt
+main.exe
+.vscode/launch.json
+*.json
