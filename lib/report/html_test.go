@@ -10,13 +10,14 @@ import (
 
 func TestGenerateReport(t *testing.T) {
 	authuser := &options.UserFlags{
-		User:     "gameandwatch",
-		Target:   "127.0.0.1",
-		Password: "password",
-		Domain:   "./",
-		Port:     445,
-		Verbose:  false,
-		MaxDepth: 5,
+		User:            "gameandwatch",
+		Target:          "127.0.0.1",
+		Password:        "password",
+		Domain:          "./",
+		Port:            445,
+		Verbose:         false,
+		MaxDepth:        5,
+		OutFileLocation: "Test",
 	}
 
 	var testTarget smbprotocol.Target
@@ -61,7 +62,7 @@ func TestGenerateReport(t *testing.T) {
 	}
 	testTarget.CloseSMBSession()
 	testTarget.CloseTCP()
-	error2 := GenerateReport(&testTarget)
+	error2 := GenerateReport(&testTarget, authuser)
 	if error2 != nil {
 		t.Error(error2)
 	}

@@ -27,18 +27,18 @@ type Share struct {
 	UserWrite     bool
 	GuestRead     bool
 	GuestWrite    bool
-	ListOfFolders []folder_A
-	ListOfFiles   []file_A
+	ListOfFolders []Folder_A
+	ListOfFiles   []File_A
 }
 
-type folder_A struct {
+type Folder_A struct {
 	Depth           int
 	Name            string // Folder Name
 	path            string //Folder Path relative to root folder
 	fullPath        string // Share + folder path relative to root
 	HumanPath       string // Host + Share + Folder Path relative to root
-	ListOfFolders   []folder_A
-	ListOfFiles     []file_A
+	ListOfFolders   []Folder_A
+	ListOfFiles     []File_A
 	ReadAccess      bool
 	WriteAccess     bool
 	NumberOfFiles   int
@@ -47,7 +47,7 @@ type folder_A struct {
 	Stop_reason     int
 }
 
-type file_A struct {
+type File_A struct {
 	Name       string
 	path       string
 	fullPath   string
@@ -103,14 +103,14 @@ func (s *Share) ListFilesRoot(host string) error {
 	return nil
 }
 
-func sortFiles(osfile []fs.FileInfo, CurrentPath string, depth int, s *Share, host string) ([]file_A, []folder_A) {
-	var folders []folder_A
-	var files []file_A
+func sortFiles(osfile []fs.FileInfo, CurrentPath string, depth int, s *Share, host string) ([]File_A, []Folder_A) {
+	var folders []Folder_A
+	var files []File_A
 
 	for _, x := range osfile {
 		if x.IsDir() { // Define Folder Properties Here
 
-			var newfolder folder_A
+			var newfolder Folder_A
 			newfolder.Name = x.Name()
 			if CurrentPath == "" {
 				newfolder.path = x.Name()
@@ -123,7 +123,7 @@ func sortFiles(osfile []fs.FileInfo, CurrentPath string, depth int, s *Share, ho
 
 			folders = append(folders, newfolder)
 		} else { // Define File Properties Here
-			var newfile file_A
+			var newfile File_A
 			newfile.Name = x.Name()
 			if CurrentPath == "" {
 				newfile.path = x.Name()
@@ -141,7 +141,7 @@ func sortFiles(osfile []fs.FileInfo, CurrentPath string, depth int, s *Share, ho
 	return files, folders
 }
 
-func walkDirFn(currentFolder *folder_A, depth int, s *Share, host string) error {
+func walkDirFn(currentFolder *Folder_A, depth int, s *Share, host string) error {
 	if depth >= s.UserFlags.MaxDepth {
 		currentFolder.Stop_reason = MAX_DEPTH_STOP
 		return nil
