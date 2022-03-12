@@ -10,7 +10,7 @@ import (
 	"github.com/ilightthings/shareblair/lib/smbprotocol"
 )
 
-func GenerateReport(s *smbprotocol.Target, o *options.UserFlags) error {
+func GenerateReport(host *smbprotocol.Target, UserFlags *options.UserFlags) error {
 	const SubEntry = `
 	<style>
     table, th, td {
@@ -37,6 +37,7 @@ func GenerateReport(s *smbprotocol.Target, o *options.UserFlags) error {
 	</table>
 	<br>`
 
+	//TODO Add function, if share is no access append "NO ACCESS" to share entry
 	const ShareEntry = `
 	
 	<table>
@@ -83,14 +84,14 @@ func GenerateReport(s *smbprotocol.Target, o *options.UserFlags) error {
 
 	var documentBytes []byte
 	var headerBytes bytes.Buffer
-	g, _ := template.New("table").Parse(SubEntry)
-	q, _ := template.New("header").Parse(header)
-	h, _ := template.New("Share").Parse(ShareEntry)
-	q.Execute(&headerBytes, s)
+	folderHTML, _ := template.New("table").Parse(SubEntry)
+	headerHTML, _ := template.New("header").Parse(header)
+	shareHTML, _ := template.New("Share").Parse(ShareEntry)
+	headerHTML.Execute(&headerBytes, host)
 	documentBytes = append(documentBytes, headerBytes.Bytes()...)
 
-	for x := range s.ListOfShares {
-		documentBytes = append(documentBytes, makeNewEntry(&s.ListOfShares[x], g, h, o)...)
+	for x := range host.ListOfShares {
+		documentBytes = append(documentBytes, makeNewEntry(&host.ListOfShares[x], folderHTML, shareHTML, UserFlags)...)
 
 	}
 	os.WriteFile("file.html", documentBytes, 0644)
