@@ -1,14 +1,16 @@
 package main
 
 import (
-	"log"
 	"os"
 
 	"github.com/akamensky/argparse"
 	"github.com/ilightthings/shareblair/lib/options"
 	"github.com/ilightthings/shareblair/lib/report"
 	"github.com/ilightthings/shareblair/lib/smbprotocol"
+	"github.com/sirupsen/logrus"
 )
+
+var log = logrus.New()
 
 func main() {
 	parser := argparse.NewParser("shareblair", "")
@@ -18,7 +20,7 @@ func main() {
 	password := parser.String("p", "password", &argparse.Options{Required: false, Help: "Password to authenticate with"})
 	hash := parser.String("", "hash", &argparse.Options{Required: false, Help: "Hash to authenticate with"})
 	port := parser.Int("", "port", &argparse.Options{Required: false, Default: 445, Help: "Port to connect to"})
-	verbose := parser.Flag("v", "verbose", &argparse.Options{Required: false, Help: "Add verbosity", Default: false})
+	verbose := parser.Int("v", "verbose", &argparse.Options{Required: false, Help: "Verbosity Level. 0 - Debug, 1 - Info, Warn - 3, Error - 4", Default: 2})
 	maxDepth := parser.Int("", "maxdepth", &argparse.Options{Required: false, Help: "Max Recursive Depth for Share Scanning. 0 will only scan the top level folders.", Default: 5})
 
 	//TODO add timeout for func (r *Target) InitTCP()
@@ -28,6 +30,24 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	logger := logrus.New()
+	logger.SetOutput(os.Stdout)
+	switch *verbose {
+	case 6:
+		logger.SetLevel(logrus.TraceLevel)
+	case 0:
+		logger.SetLevel(logrus.DebugLevel)
+	case 1:
+		logger.SetLevel(logrus.InfoLevel)
+	case 2:
+		logger.SetLevel(logrus.WarnLevel)
+	case 3:
+		logger.SetLevel(logrus.ErrorLevel)
+	default:
+		logger.SetLevel(logrus.WarnLevel)
+	}
+
 	userflags := &options.UserFlags{
 		Target:   *target,
 		User:     *user,
@@ -35,10 +55,10 @@ func main() {
 		Password: *password,
 		Hash:     *hash,
 		Port:     *port,
-		Verbose:  *verbose,
 		MaxDepth: *maxDepth,
+		Logging:  *logger,
 	}
-
+	// TODO Implement better logging system. Maybe logrus
 	//var hostsArray []smbprotocol.Target
 
 	userflags.DetermineTarget()

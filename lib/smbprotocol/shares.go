@@ -48,11 +48,11 @@ type Folder_A struct {
 }
 
 type File_A struct {
-	Name       string
-	path       string
-	fullPath   string
-	HumanPath  string
-	FolderPath string
+	Name       string `validate:"printascii"`
+	path       string `validate:"printascii"`
+	fullPath   string `validate:"printascii"`
+	HumanPath  string `validate:"printascii"`
+	FolderPath string `validate:"printascii"`
 	Size       int64
 }
 
@@ -60,20 +60,14 @@ func (s *Share) InitializeShare(q *smb2.Session, f *options.UserFlags) error {
 	s.SMBConnection = q
 	s.UserFlags = f
 	var err error
-	if s.UserFlags.Verbose {
-		fmt.Printf("Attempting to mount %s\n", s.ShareName)
-	}
+	f.Logging.Info(fmt.Sprintf("Attempting to mount %s\n", s.ShareName))
 	s.Mount, err = s.SMBConnection.Mount(s.ShareName)
 	if err != nil {
-		if s.UserFlags.Verbose {
-			fmt.Printf("Failed to mount %s -- %s\n", s.ShareName, err)
-		}
+		f.Logging.Info(fmt.Sprintf("Failed to mount %s -- %s\n", s.ShareName, err))
 		return err
 	}
 	s.Mounted = true
-	if s.UserFlags.Verbose {
-		fmt.Printf("Successfully mounted %s\n", s.ShareName)
-	}
+	f.Logging.Warn(fmt.Sprintf("Successfully mounted %-5s\n", s.ShareName))
 	s.isHidden()
 	return nil
 

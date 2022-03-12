@@ -1,27 +1,43 @@
 package options
 
-import "testing"
+import (
+	"os"
+	"testing"
+
+	"github.com/sirupsen/logrus"
+)
 
 func TestReturnTargets(t *testing.T) {
+	log := logrus.New()
+	log.SetOutput(os.Stdout)
+	log.SetLevel(logrus.InfoLevel)
+	log.SetFormatter(&logrus.TextFormatter{
+		FullTimestamp: false,
+	})
 
 	testCidr := UserFlags{
-		Target: "192.168.1.0/28",
+		Target:  "192.168.1.0/28",
+		Logging: *log,
 	}
 	testFile := UserFlags{
-		Target: "targets_test.txt",
+		Target:  "targets_test.txt",
+		Logging: *log,
 	}
 
 	testSingleIP := UserFlags{
-		Target: "192.168.60.60",
+		Target:  "192.168.60.60",
+		Logging: *log,
 	}
 
 	singleHost := UserFlags{
-		Target: "foxtrot.ggray.info",
+		Target:  "foxtrot.ggray.info",
+		Logging: *log,
 	}
-	singleHost.DetermineTarget()
-	testSingleIP.DetermineTarget()
-	testCidr.DetermineTarget()
-	testFile.DetermineTarget()
+
+	Invalid := UserFlags{
+		Target:  "whatevercouldgowrong",
+		Logging: *log,
+	}
 
 	cidrResult := testCidr.DetermineTarget()
 	fileResult := testFile.DetermineTarget()
@@ -40,5 +56,6 @@ func TestReturnTargets(t *testing.T) {
 	if len(singleHostResult) != 1 {
 		t.Error("Should be 1")
 	}
+	Invalid.DetermineTarget()
 
 }

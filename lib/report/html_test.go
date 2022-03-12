@@ -46,7 +46,7 @@ func TestGenerateReport(t *testing.T) {
 	if guestAccess == true {
 		t.Error("Somehow guest access is enabled here.....")
 	} */
-	for y, _ := range testTarget.ListOfShares {
+	for y := range testTarget.ListOfShares {
 		err1 := testTarget.ListOfShares[y].InitializeShare(testTarget.ConnectionSMB, testTarget.UserFlag)
 		if err1 != nil {
 			t.Error(err1)
